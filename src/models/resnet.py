@@ -123,17 +123,20 @@ class ResNet(nn.Module):
         self.feature_dim = 512 * block.expansion
 
         # backbone network
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7,
+                               stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=last_stride)
+        self.layer4 = self._make_layer(
+            block, 512, layers[3], stride=last_stride)
 
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.fc = self._construct_fc_layer(fc_dims, 512 * block.expansion, dropout_p)
+        self.fc = self._construct_fc_layer(
+            fc_dims, 512 * block.expansion, dropout_p)
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
         self._init_params()
@@ -192,7 +195,8 @@ class ResNet(nn.Module):
     def _init_params(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.kaiming_normal_(
+                    m.weight, mode="fan_out", nonlinearity="relu")
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
@@ -295,4 +299,36 @@ def resnet50_fc512(num_classes, loss={"xent"}, pretrained=True, **kwargs):
     )
     if pretrained:
         init_pretrained_weights(model, model_urls["resnet50"])
+    return model
+
+
+def resnet34(num_classes, loss={"xent"}, pretrained=True, **kwargs):
+    model = ResNet(
+        num_classes=num_classes,
+        loss=loss,
+        block=Bottleneck,
+        layers=[3, 4, 6, 3],
+        last_stride=2,
+        fc_dims=None,
+        dropout_p=None,
+        **kwargs,
+    )
+    if pretrained:
+        init_pretrained_weights(model, model_urls["resnet34"])
+    return model
+
+
+def resnet34_fc512(num_classes, loss={"xent"}, pretrained=True, **kwargs):
+    model = ResNet(
+        num_classes=num_classes,
+        loss=loss,
+        block=Bottleneck,
+        layers=[3, 4, 6, 3],
+        last_stride=1,
+        fc_dims=[512],
+        dropout_p=None,
+        **kwargs,
+    )
+    if pretrained:
+        init_pretrained_weights(model, model_urls["resnet34"])
     return model
