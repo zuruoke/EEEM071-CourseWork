@@ -8,7 +8,7 @@ __model_factory = {
     "resnet50": resnet50,
     "resnet50_fc512": resnet50_fc512,
     "resnet34": resnet34,
-    "resnet34_fc512": resnet34_fc512
+    "resnet34_fc512": resnet34_fc512,
 }
 
 
