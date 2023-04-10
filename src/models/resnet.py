@@ -350,28 +350,29 @@ def resnet34_fc512(num_classes, pooling='avg', loss={"xent"}, pretrained=True, *
 
 
 class SpatialPyramidPooling(nn.Module):
-    def __init__(self, num_levels, pool_type='max_pool'):
+    def __init__(self, num_levels):
         super(SpatialPyramidPooling, self).__init__()
         self.num_levels = num_levels
-        self.pool_type = pool_type
 
     def forward(self, x):
-        batch_size, c, h, w = x.size()
-        pyramid_features = []
-        for i in range(self.num_levels):
-            level = i + 1
-            kernel_size = (math.ceil(h / 2 ** level),
-                           math.ceil(w / 2 ** level))
-            stride = (math.ceil(h / 2 ** level), math.ceil(w / 2 ** level))
-            padding = (math.floor(h / 2 ** level), math.floor(w / 2 ** level))
+        N, C, H, W = x.size()
+        pyramid_output = []
 
-            if self.pool_type == 'max_pool':
-                pool = F.max_pool2d(
-                    x, kernel_size=kernel_size, stride=stride, padding=padding).view(batch_size, -1)
-            else:
-                pool = F.avg_pool2d(
-                    x, kernel_size=kernel_size, stride=stride, padding=padding).view(batch_size, -1)
-            pyramid_features.append(pool)
+        for level in range(self.num_levels):
+            level_output = []
+            num_bins = 2 ** level
 
-        output = torch.cat(pyramid_features, 1)
-        return output
+            for row in range(num_bins):
+                for col in range(num_bins):
+                    kernel_size = (math.ceil(H / num_bins),
+                                   math.ceil(W / num_bins))
+                    stride = (math.ceil(H / num_bins), math.ceil(W / num_bins))
+                    padding = (math.floor((kernel_size[0] * (row + 1) - H + stride[0]) / 2),
+                               math.floor((kernel_size[1] * (col + 1) - W + stride[1]) / 2))
+
+                    level_output.append(F.max_pool2d(
+                        x, kernel_size, stride, padding))
+            level_output = torch.cat(level_output, 1)
+            pyramid_output.append(level_output.view(N, -1))
+
+        return torch.cat(pyramid_output, 1)
