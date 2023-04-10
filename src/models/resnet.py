@@ -129,9 +129,6 @@ class ResNet(nn.Module):
         # backbone network
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7,
                                stride=2, padding=3, bias=False)
-        self.conv_reduce = nn.Conv2d(
-            559104, 512 * block.expansion, kernel_size=1, stride=1, padding=0)
-        self.pool_reduce = nn.AdaptiveAvgPool2d(1)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -145,9 +142,12 @@ class ResNet(nn.Module):
             self.global_pooling = SpatialPyramidPooling(3)
         else:
             self.global_pooling = nn.AdaptiveAvgPool2d(1)
-
-        self.fc = self._construct_fc_layer(
-            fc_dims, 512 * block.expansion, dropout_p)
+        if pooling == 'spp':
+            self.fc = self._construct_fc_layer(
+                fc_dims, spp_output_shape, dropout_p)
+        else:
+            self.fc = self._construct_fc_layer(
+                fc_dims, 512 * block.expansion, dropout_p)
 
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
@@ -236,12 +236,6 @@ class ResNet(nn.Module):
     def forward(self, x):
         f = self.featuremaps(x)
         v = self.global_pooling(f)
-
-        if (self.pooling == 'spp'):
-            v = v.view(64, spp_output_shape, 1, 1)
-            v = self.conv_reduce(v)
-            v = self.pool_reduce(v)
-
         v = v.view(v.size(0), -1)
 
         if self.fc is not None:
