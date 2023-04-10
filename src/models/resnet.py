@@ -241,6 +241,7 @@ class ResNet(nn.Module):
         v = self.global_pooling(f)
 
         if (self.pooling == 'spp'):
+            v = v.view(64, spp_output_shape, 1, 1)
             v = self.conv_reduce(v)
             v = self.pool_reduce(v)
 
