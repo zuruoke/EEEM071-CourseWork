@@ -235,7 +235,7 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         f = self.featuremaps(x)
-        v = self.global_avgpool(f)
+        v = self.global_pooling(f)
         v = v.view(v.size(0), -1)
 
         if self.fc is not None:
