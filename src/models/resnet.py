@@ -5,7 +5,6 @@ import torch.utils.model_zoo as model_zoo
 import torchvision
 from torch import nn
 from torch.nn import functional as F
-import math
 
 __all__ = ["resnet50", "resnet50_fc512"]
 
@@ -116,7 +115,6 @@ class ResNet(nn.Module):
         last_stride=2,
         fc_dims=None,
         dropout_p=None,
-        pooling='avg',
         **kwargs,
     ):
         self.inplanes = 64
@@ -135,18 +133,8 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(
             block, 512, layers[3], stride=last_stride)
-        self.pooling = pooling
 
-        #self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        if pooling == 'avg':
-            self.global_pooling = nn.AdaptiveAvgPool2d(1)
-        elif pooling == 'max':
-            self.global_pooling = nn.AdaptiveMaxPool2d(1)
-        elif pooling == 'spp':
-            self.global_pooling = SpatialPyramidPooling(num_levels=3)
-        else:
-            raise ValueError(f"Invalid pooling type: {pooling}")
-
+        self.global_avgpool = nn.AdaptiveAvgPool2d(1)
         self.fc = self._construct_fc_layer(
             fc_dims, 512 * block.expansion, dropout_p)
         self.classifier = nn.Linear(self.feature_dim, num_classes)
@@ -192,16 +180,6 @@ class ResNet(nn.Module):
         ), "fc_dims must be either list or tuple, but got {}".format(type(fc_dims))
 
         layers = []
-
-        if self.pooling == 'spp':  # Check if pooling is 'spp'
-            # Add the new fully connected layer
-            layers.append(nn.Linear(1344, 512))
-            layers.append(nn.BatchNorm1d(512))
-            layers.append(nn.ReLU(inplace=True))
-            if dropout_p is not None:
-                layers.append(nn.Dropout(p=dropout_p))
-            input_dim = 512  # Update the input_dim variable
-
         for dim in fc_dims:
             layers.append(nn.Linear(input_dim, dim))
             layers.append(nn.BatchNorm1d(dim))
@@ -245,7 +223,7 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         f = self.featuremaps(x)
-        v = self.global_pooling(f)
+        v = self.global_avgpool(f)
         v = v.view(v.size(0), -1)
 
         if self.fc is not None:
@@ -292,14 +270,13 @@ resnet152: block=Bottleneck, layers=[3, 8, 36, 3]
 """
 
 
-def resnet50(num_classes, pooling='avg', loss={"xent"}, pretrained=True, **kwargs):
+def resnet50(num_classes, loss={"xent"}, pretrained=True, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
         block=Bottleneck,
         layers=[3, 4, 6, 3],
         last_stride=2,
-        pooling=pooling,
         fc_dims=None,
         dropout_p=None,
         **kwargs,
@@ -309,14 +286,13 @@ def resnet50(num_classes, pooling='avg', loss={"xent"}, pretrained=True, **kwarg
     return model
 
 
-def resnet50_fc512(num_classes, pooling='avg', loss={"xent"}, pretrained=True, **kwargs):
+def resnet50_fc512(num_classes, loss={"xent"}, pretrained=True, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
         block=Bottleneck,
         layers=[3, 4, 6, 3],
         last_stride=1,
-        pooling=pooling,
         fc_dims=[512],
         dropout_p=None,
         **kwargs,
@@ -360,30 +336,30 @@ def resnet34_fc512(num_classes, pooling='avg', loss={"xent"}, pretrained=True, *
     return model
 
 
-class SpatialPyramidPooling(nn.Module):
-    def __init__(self, num_levels):
-        super(SpatialPyramidPooling, self).__init__()
-        self.num_levels = num_levels
+# class SpatialPyramidPooling(nn.Module):
+#     def __init__(self, num_levels):
+#         super(SpatialPyramidPooling, self).__init__()
+#         self.num_levels = num_levels
 
-    def forward(self, x):
-        N, C, H, W = x.size()
-        pyramid_output = []
+#     def forward(self, x):
+#         N, C, H, W = x.size()
+#         pyramid_output = []
 
-        for level in range(self.num_levels):
-            level_output = []
-            num_bins = 2 ** level
+#         for level in range(self.num_levels):
+#             level_output = []
+#             num_bins = 2 ** level
 
-            for row in range(num_bins):
-                for col in range(num_bins):
-                    kernel_size = (math.ceil(H / num_bins),
-                                   math.ceil(W / num_bins))
-                    stride = (math.ceil(H / num_bins), math.ceil(W / num_bins))
-                    padding = (math.floor((stride[0] * (num_bins - 1) - H + kernel_size[0]) / 2),
-                               math.floor((stride[1] * (num_bins - 1) - W + kernel_size[1]) / 2))
+#             for row in range(num_bins):
+#                 for col in range(num_bins):
+#                     kernel_size = (math.ceil(H / num_bins),
+#                                    math.ceil(W / num_bins))
+#                     stride = (math.ceil(H / num_bins), math.ceil(W / num_bins))
+#                     padding = (math.floor((stride[0] * (num_bins - 1) - H + kernel_size[0]) / 2),
+#                                math.floor((stride[1] * (num_bins - 1) - W + kernel_size[1]) / 2))
 
-                    level_output.append(F.max_pool2d(
-                        x, kernel_size, stride, padding))
-            level_output = torch.cat(level_output, 1)
-            pyramid_output.append(level_output.view(N, -1))
+#                     level_output.append(F.max_pool2d(
+#                         x, kernel_size, stride, padding))
+#             level_output = torch.cat(level_output, 1)
+#             pyramid_output.append(level_output.view(N, -1))
 
-        return torch.cat(pyramid_output, 1)
+#         return torch.cat(pyramid_output, 1)
