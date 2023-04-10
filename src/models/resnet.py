@@ -367,8 +367,8 @@ class SpatialPyramidPooling(nn.Module):
                     kernel_size = (math.ceil(H / num_bins),
                                    math.ceil(W / num_bins))
                     stride = (math.ceil(H / num_bins), math.ceil(W / num_bins))
-                    padding = (math.floor((kernel_size[0] * (row + 1) - H + stride[0]) / 2),
-                               math.floor((kernel_size[1] * (col + 1) - W + stride[1]) / 2))
+                    padding = (math.floor((stride[0] * (num_bins - 1) - H + kernel_size[0]) / 2),
+                               math.floor((stride[1] * (num_bins - 1) - W + kernel_size[1]) / 2))
 
                     level_output.append(F.max_pool2d(
                         x, kernel_size, stride, padding))
