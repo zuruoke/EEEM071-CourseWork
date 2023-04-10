@@ -146,8 +146,11 @@ class ResNet(nn.Module):
         else:
             raise ValueError(f"Invalid pooling type: {pooling}")
 
-        self.fc = self._construct_fc_layer(
-            fc_dims, 512 * block.expansion, dropout_p)
+        input_dim = 512 * block.expansion if pooling != 'spp' else 64 * 14
+        self.fc = self._construct_fc_layer(fc_dims, input_dim, dropout_p)
+
+        # self.fc = self._construct_fc_layer(
+        #     fc_dims, 512 * block.expansion, dropout_p)
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
         self._init_params()
