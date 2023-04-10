@@ -146,11 +146,8 @@ class ResNet(nn.Module):
         else:
             raise ValueError(f"Invalid pooling type: {pooling}")
 
-        input_dim = 512 * block.expansion if pooling != 'spp' else 64 * 14
-        self.fc = self._construct_fc_layer(fc_dims, input_dim, dropout_p)
-
-        # self.fc = self._construct_fc_layer(
-        #     fc_dims, 512 * block.expansion, dropout_p)
+        self.fc = self._construct_fc_layer(
+            fc_dims, 512 * block.expansion, dropout_p)
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
         self._init_params()
@@ -194,6 +191,16 @@ class ResNet(nn.Module):
         ), "fc_dims must be either list or tuple, but got {}".format(type(fc_dims))
 
         layers = []
+
+        if self.pooling == 'spp':  # Check if pooling is 'spp'
+            # Add the new fully connected layer
+            layers.append(nn.Linear(1344, 512))
+            layers.append(nn.BatchNorm1d(512))
+            layers.append(nn.ReLU(inplace=True))
+            if dropout_p is not None:
+                layers.append(nn.Dropout(p=dropout_p))
+            input_dim = 512  # Update the input_dim variable
+
         for dim in fc_dims:
             layers.append(nn.Linear(input_dim, dim))
             layers.append(nn.BatchNorm1d(dim))
