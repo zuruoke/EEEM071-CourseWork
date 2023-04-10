@@ -130,7 +130,7 @@ class ResNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7,
                                stride=2, padding=3, bias=False)
         self.conv_reduce = nn.Conv2d(
-            559104, 512, kernel_size=1, stride=1, padding=0)
+            559104, 512 * block.expansion, kernel_size=1, stride=1, padding=0)
         self.pool_reduce = nn.AdaptiveAvgPool2d(1)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
