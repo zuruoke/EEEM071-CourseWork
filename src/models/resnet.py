@@ -5,7 +5,7 @@ import torch.utils.model_zoo as model_zoo
 import torchvision
 from torch import nn
 from torch.nn import functional as F
-from torchspp import SpatialPyramidPooling
+import math
 
 __all__ = ["resnet50", "resnet50_fc512"]
 
@@ -142,7 +142,7 @@ class ResNet(nn.Module):
         elif pooling == 'max':
             self.global_pooling = nn.AdaptiveMaxPool2d(1)
         elif pooling == 'spp':
-            self.global_pooling = SpatialPyramidPooling(3)
+            self.global_pooling = SpatialPyramidPooling(num_levels=3)
         else:
             raise ValueError(f"Invalid pooling type: {pooling}")
 
@@ -347,3 +347,31 @@ def resnet34_fc512(num_classes, pooling='avg', loss={"xent"}, pretrained=True, *
     if pretrained:
         init_pretrained_weights(model, model_urls["resnet34"])
     return model
+
+
+class SpatialPyramidPooling(nn.Module):
+    def __init__(self, num_levels, pool_type='max_pool'):
+        super(SpatialPyramidPooling, self).__init__()
+        self.num_levels = num_levels
+        self.pool_type = pool_type
+
+    def forward(self, x):
+        batch_size, c, h, w = x.size()
+        pyramid_features = []
+        for i in range(self.num_levels):
+            level = i + 1
+            kernel_size = (math.ceil(h / 2 ** level),
+                           math.ceil(w / 2 ** level))
+            stride = (math.ceil(h / 2 ** level), math.ceil(w / 2 ** level))
+            padding = (math.floor(h / 2 ** level), math.floor(w / 2 ** level))
+
+            if self.pool_type == 'max_pool':
+                pool = F.max_pool2d(
+                    x, kernel_size=kernel_size, stride=stride, padding=padding).view(batch_size, -1)
+            else:
+                pool = F.avg_pool2d(
+                    x, kernel_size=kernel_size, stride=stride, padding=padding).view(batch_size, -1)
+            pyramid_features.append(pool)
+
+        output = torch.cat(pyramid_features, 1)
+        return output
