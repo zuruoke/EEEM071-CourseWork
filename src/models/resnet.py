@@ -129,6 +129,9 @@ class ResNet(nn.Module):
         # backbone network
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7,
                                stride=2, padding=3, bias=False)
+        self.conv_reduce = nn.Conv2d(
+            559104, 512, kernel_size=1, stride=1, padding=0)
+        self.pool_reduce = nn.AdaptiveAvgPool2d(1)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -236,6 +239,11 @@ class ResNet(nn.Module):
     def forward(self, x):
         f = self.featuremaps(x)
         v = self.global_pooling(f)
+
+        if (self.pooling == 'spp'):
+            v = self.conv_reduce(v)
+            v = self.pool_reduce(v)
+
         v = v.view(v.size(0), -1)
 
         if self.fc is not None:
