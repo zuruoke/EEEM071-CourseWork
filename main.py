@@ -53,7 +53,8 @@ def main():
         print(f"Currently using GPU {args.gpu_devices}")
         cudnn.benchmark = True
     else:
-        warnings.warn("Currently using CPU, however, GPU is highly recommended")
+        warnings.warn(
+            "Currently using CPU, however, GPU is highly recommended")
 
     print("Initializing image data manager")
     dm = ImageDataManager(use_gpu, **dataset_kwargs(args))
@@ -63,6 +64,7 @@ def main():
     model = models.init_model(
         name=args.arch,
         num_classes=dm.num_train_pids,
+        pooling=args.pooling,
         loss={"xent", "htri"},
         pretrained=not args.no_pretrained,
         use_gpu=use_gpu,

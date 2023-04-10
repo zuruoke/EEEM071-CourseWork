@@ -5,6 +5,7 @@ import torch.utils.model_zoo as model_zoo
 import torchvision
 from torch import nn
 from torch.nn import functional as F
+from torchspp import SpatialPyramidPooling
 
 __all__ = ["resnet50", "resnet50_fc512"]
 
@@ -115,6 +116,7 @@ class ResNet(nn.Module):
         last_stride=2,
         fc_dims=None,
         dropout_p=None,
+        pooling='avg',
         **kwargs,
     ):
         self.inplanes = 64
@@ -134,7 +136,16 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(
             block, 512, layers[3], stride=last_stride)
 
-        self.global_avgpool = nn.AdaptiveAvgPool2d(1)
+        #self.global_avgpool = nn.AdaptiveAvgPool2d(1)
+        if pooling == 'avg':
+            self.global_pooling = nn.AdaptiveAvgPool2d(1)
+        elif pooling == 'max':
+            self.global_pooling = nn.AdaptiveMaxPool2d(1)
+        elif pooling == 'spp':
+            self.global_pooling = SpatialPyramidPooling(3)
+        else:
+            raise ValueError(f"Invalid pooling type: {pooling}")
+
         self.fc = self._construct_fc_layer(
             fc_dims, 512 * block.expansion, dropout_p)
         self.classifier = nn.Linear(self.feature_dim, num_classes)
@@ -223,7 +234,7 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         f = self.featuremaps(x)
-        v = self.global_avgpool(f)
+        v = self.global_pooling(f)
         v = v.view(v.size(0), -1)
 
         if self.fc is not None:
@@ -270,13 +281,14 @@ resnet152: block=Bottleneck, layers=[3, 8, 36, 3]
 """
 
 
-def resnet50(num_classes, loss={"xent"}, pretrained=True, **kwargs):
+def resnet50(num_classes, pooling='avg', loss={"xent"}, pretrained=True, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
         block=Bottleneck,
         layers=[3, 4, 6, 3],
         last_stride=2,
+        pooling=pooling,
         fc_dims=None,
         dropout_p=None,
         **kwargs,
@@ -286,13 +298,14 @@ def resnet50(num_classes, loss={"xent"}, pretrained=True, **kwargs):
     return model
 
 
-def resnet50_fc512(num_classes, loss={"xent"}, pretrained=True, **kwargs):
+def resnet50_fc512(num_classes, pooling='avg', loss={"xent"}, pretrained=True, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
         block=Bottleneck,
         layers=[3, 4, 6, 3],
         last_stride=1,
+        pooling=pooling,
         fc_dims=[512],
         dropout_p=None,
         **kwargs,
@@ -302,11 +315,12 @@ def resnet50_fc512(num_classes, loss={"xent"}, pretrained=True, **kwargs):
     return model
 
 
-def resnet34(num_classes, loss={"xent"}, pretrained=True, **kwargs):
+def resnet34(num_classes, pooling='avg', loss={"xent"}, pretrained=True, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
         block=Bottleneck,
+        pooling=pooling,
         layers=[3, 4, 6, 3],
         last_stride=2,
         fc_dims=None,
@@ -318,13 +332,14 @@ def resnet34(num_classes, loss={"xent"}, pretrained=True, **kwargs):
     return model
 
 
-def resnet34_fc512(num_classes, loss={"xent"}, pretrained=True, **kwargs):
+def resnet34_fc512(num_classes, pooling='avg', loss={"xent"}, pretrained=True, **kwargs):
     model = ResNet(
         num_classes=num_classes,
         loss=loss,
         block=Bottleneck,
         layers=[3, 4, 6, 3],
         last_stride=1,
+        pooling=pooling,
         fc_dims=[512],
         dropout_p=None,
         **kwargs,

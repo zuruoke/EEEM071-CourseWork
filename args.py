@@ -41,8 +41,10 @@ def argument_parser():
     parser.add_argument(
         "--split-id", type=int, default=0, help="split index (note: 0-based)"
     )
-    parser.add_argument("--height", type=int, default=128, help="height of an image")
-    parser.add_argument("--width", type=int, default=256, help="width of an image")
+    parser.add_argument("--height", type=int, default=128,
+                        help="height of an image")
+    parser.add_argument("--width", type=int, default=256,
+                        help="width of an image")
     parser.add_argument(
         "--train-sampler",
         type=str,
@@ -153,7 +155,8 @@ def argument_parser():
         type=int,
         help="stepsize to decay learning rate",
     )
-    parser.add_argument("--gamma", default=0.1, type=float, help="learning rate decay")
+    parser.add_argument("--gamma", default=0.1, type=float,
+                        help="learning rate decay")
 
     # ************************************************************
     # Cross entropy loss-specific setting
@@ -193,7 +196,7 @@ def argument_parser():
     parser.add_argument(
         "--no-pretrained", action="store_true", help="do not load pretrained weights"
     )
-
+    parser.add_argument("--pooling", type=str, default='avg')
     # ************************************************************
     # Test settings
     # ************************************************************
@@ -203,7 +206,8 @@ def argument_parser():
         default="",
         help="load pretrained weights but ignore layers that don't match in size",
     )
-    parser.add_argument("--evaluate", action="store_true", help="evaluate only")
+    parser.add_argument("--evaluate", action="store_true",
+                        help="evaluate only")
     parser.add_argument(
         "--eval-freq",
         type=int,
@@ -226,7 +230,8 @@ def argument_parser():
     # ************************************************************
     # Miscs
     # ************************************************************
-    parser.add_argument("--print-freq", type=int, default=10, help="print frequency")
+    parser.add_argument("--print-freq", type=int,
+                        default=10, help="print frequency")
     parser.add_argument("--seed", type=int, default=1, help="manual seed")
     parser.add_argument(
         "--resume",
