@@ -144,7 +144,7 @@ class ResNet(nn.Module):
             self.global_pooling = nn.AdaptiveAvgPool2d(1)
         if pooling == 'spp':
             self.fc = self._construct_fc_layer(
-                fc_dims, 512 * spp_output_shape, dropout_p)
+                fc_dims, 10752, dropout_p)
         else:
             self.fc = self._construct_fc_layer(
                 fc_dims, 512 * block.expansion, dropout_p)
@@ -376,4 +376,6 @@ class SpatialPyramidPooling(nn.Module):
             level_output = torch.cat(level_output, 1)
             pyramid_output.append(level_output.view(N, -1))
 
-        return torch.cat(pyramid_output, 1)
+        output = torch.cat(pyramid_output, 1)
+        print("Shape of SPP output:", output.shape)
+        return output
