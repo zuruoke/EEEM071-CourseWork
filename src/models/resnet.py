@@ -145,12 +145,9 @@ class ResNet(nn.Module):
             self.global_pooling = SpatialPyramidPooling(3)
         else:
             self.global_pooling = nn.AdaptiveAvgPool2d(1)
-        if pooling == 'spp':
-            self.fc = self._construct_fc_layer(
-                fc_dims, spp_output_shape, dropout_p)
-        else:
-            self.fc = self._construct_fc_layer(
-                fc_dims, 512 * block.expansion, dropout_p)
+
+        self.fc = self._construct_fc_layer(
+            fc_dims, 512 * block.expansion, dropout_p)
 
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
