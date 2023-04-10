@@ -8,7 +8,7 @@ from torch.nn import functional as F
 import math
 
 __all__ = ["resnet50", "resnet50_fc512"]
-spp_output_shape = 21
+spp_output_shape = 559104
 
 model_urls = {
     "resnet18": "https://download.pytorch.org/models/resnet18-5c106cde.pth",
@@ -144,7 +144,7 @@ class ResNet(nn.Module):
             self.global_pooling = nn.AdaptiveAvgPool2d(1)
         if pooling == 'spp':
             self.fc = self._construct_fc_layer(
-                fc_dims, 559104, dropout_p)
+                fc_dims, spp_output_shape, dropout_p)
         else:
             self.fc = self._construct_fc_layer(
                 fc_dims, 512 * block.expansion, dropout_p)
@@ -377,5 +377,4 @@ class SpatialPyramidPooling(nn.Module):
             pyramid_output.append(level_output.view(N, -1))
 
         output = torch.cat(pyramid_output, 1)
-        print("Shape of SPP output:", output.shape)
         return output
