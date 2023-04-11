@@ -272,7 +272,7 @@ def mobilenet_v3_small_fc_512(num_classes, loss={"xent", "htri"}, pretrained=Tru
         num_classes=num_classes,
         loss=loss,
         pretrained=pretrained,
-        fc_dims=512,
+        fc_dims=[512],
         ** kwargs,
     )
     return model
