@@ -195,7 +195,7 @@ class TorchVisionModel(nn.Module):
         # nn.Identity() will do nothing, it's just a place-holder
         self.backbone.classifier = nn.Identity()
         if fc_dims is not None:
-            self.classifier = nn.Linear(fc_dims, num_classes)
+            self.classifier = nn.Linear(512, num_classes)
         else:
             self.classifier = nn.Linear(self.feature_dim, num_classes)
         self._init_params()
