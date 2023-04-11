@@ -100,7 +100,7 @@ class MobileNetV2(nn.Module):
             self._load_pretrained_weights()
         self._init_params()
 
-    def _construct_fc_layer(self, fc_dims, input_dim):
+    def _construct_fc_layer(self, fc_dims, input_dim, dropout_p=None):
         if fc_dims is None:
             self.feature_dim = input_dim
             return None
