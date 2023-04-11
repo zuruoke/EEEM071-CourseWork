@@ -198,7 +198,7 @@ class TorchVisionModel(nn.Module):
             self.classifier = nn.Linear(512, num_classes)
         else:
             self.classifier = nn.Linear(self.feature_dim, num_classes)
-        self._init_params()
+        # self._init_params()
 
     def forward(self, x):
         v = self.backbone(x)
@@ -217,23 +217,23 @@ class TorchVisionModel(nn.Module):
         else:
             raise KeyError(f"Unsupported loss: {self.loss}")
 
-    def _init_params(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(
-                    m.weight, mode="fan_out", nonlinearity="relu")
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm1d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
+    # def _init_params(self):
+    #     for m in self.modules():
+    #         if isinstance(m, nn.Conv2d):
+    #             nn.init.kaiming_normal_(
+    #                 m.weight, mode="fan_out", nonlinearity="relu")
+    #             if m.bias is not None:
+    #                 nn.init.constant_(m.bias, 0)
+    #         elif isinstance(m, nn.BatchNorm2d):
+    #             nn.init.constant_(m.weight, 1)
+    #             nn.init.constant_(m.bias, 0)
+    #         elif isinstance(m, nn.BatchNorm1d):
+    #             nn.init.constant_(m.weight, 1)
+    #             nn.init.constant_(m.bias, 0)
+    #         elif isinstance(m, nn.Linear):
+    #             nn.init.normal_(m.weight, 0, 0.01)
+    #             if m.bias is not None:
+    #                 nn.init.constant_(m.bias, 0)
 
     def _construct_fc_layer(self, fc_dims, input_dim, dropout_p=None):
         if fc_dims is None:
