@@ -181,7 +181,7 @@ __all__ = ["mobilenet_v3_small", "vgg16"]
 
 
 class TorchVisionModel(nn.Module):
-    def __init__(self, name, num_classes, loss, pretrained, fc_dims=None, dropout_p=None):
+    def __init__(self, name, num_classes, loss, pretrained, fc_dims=None, dropout_p=None, **kwargs):
         super().__init__()
 
         self.loss = loss
@@ -272,7 +272,7 @@ def mobilenet_v3_small_fc_512(num_classes, loss={"xent", "htri"}, pretrained=Tru
         num_classes=num_classes,
         loss=loss,
         pretrained=pretrained,
-        fc_dims=512
+        fc_dims=512,
         ** kwargs,
     )
     return model
