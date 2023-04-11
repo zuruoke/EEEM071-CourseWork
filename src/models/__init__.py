@@ -1,7 +1,7 @@
 # Copyright (c) EEEM071, University of Surrey
 
 from .resnet import resnet50, resnet50_fc512, resnet34, resnet34_fc512
-from .mobilenet import mobilenet_v2
+from .mobilenet import mobilenet_v3_small
 
 
 __model_factory = {
@@ -10,7 +10,7 @@ __model_factory = {
     "resnet50_fc512": resnet50_fc512,
     "resnet34": resnet34,
     "resnet34_fc512": resnet34_fc512,
-    "mobilenet_v2": mobilenet_v2,
+    "mobilenet_v3_small": mobilenet_v3_small,
 }
 
 
