@@ -101,6 +101,10 @@ class MobileNetV2(nn.Module):
         self._init_params()
 
     def _construct_fc_layer(self, fc_dims, input_dim, dropout_p=None):
+
+        if fc_dims is None:
+            return None
+
         layers = []
         for dim in fc_dims:
             layers.append(nn.Linear(input_dim, dim))
