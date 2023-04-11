@@ -181,20 +181,29 @@ __all__ = ["mobilenet_v3_small", "vgg16"]
 
 
 class TorchVisionModel(nn.Module):
-    def __init__(self, name, num_classes, loss, pretrained, **kwargs):
+    def __init__(self, name, num_classes, loss, pretrained, fc_dims=None, dropout_p=None, **kwargs):
         super().__init__()
 
         self.loss = loss
+        self.fc_dims = fc_dims
         self.backbone = tvmodels.__dict__[name](pretrained=pretrained)
         self.feature_dim = self.backbone.classifier[0].in_features
+        self.fc = self._construct_fc_layer(
+            self.feature_dim, fc_dims, dropout_p)
 
         # overwrite the classifier used for ImageNet pretrianing
         # nn.Identity() will do nothing, it's just a place-holder
         self.backbone.classifier = nn.Identity()
-        self.classifier = nn.Linear(self.feature_dim, num_classes)
+        if fc_dims is not None:
+            self.classifier = nn.Linear(fc_dims, num_classes)
+        else:
+            self.classifier = nn.Linear(self.feature_dim, num_classes)
+        self._init_params()
 
     def forward(self, x):
         v = self.backbone(x)
+        if self.fc_dims is not None:
+            v = self.fc(v)
 
         if not self.training:
             return v
@@ -208,6 +217,43 @@ class TorchVisionModel(nn.Module):
         else:
             raise KeyError(f"Unsupported loss: {self.loss}")
 
+    def _init_params(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(
+                    m.weight, mode="fan_out", nonlinearity="relu")
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm1d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+
+    def _construct_fc_layer(self, fc_dims, input_dim, dropout_p=None):
+        if fc_dims is None:
+            self.feature_dim = input_dim
+            return None
+
+        assert isinstance(
+            fc_dims, (list, tuple)), "fc_dims must be either list or tuple, but got {}".format(type(fc_dims))
+
+        layers = []
+        for dim in fc_dims:
+            layers.append(nn.Linear(input_dim, dim))
+            layers.append(nn.BatchNorm1d(dim))
+            layers.append(nn.ReLU(inplace=True))
+            input_dim = dim
+
+        self.feature_dim = fc_dims[-1]
+
+        return nn.Sequential(*layers)
+
 
 def mobilenet_v3_small(num_classes, loss={"xent", "htri"}, pretrained=True, **kwargs):
     model = TorchVisionModel(
@@ -216,5 +262,17 @@ def mobilenet_v3_small(num_classes, loss={"xent", "htri"}, pretrained=True, **kw
         loss=loss,
         pretrained=pretrained,
         **kwargs,
+    )
+    return model
+
+
+def mobilenet_v3_small_fc_512(num_classes, loss={"xent", "htri"}, pretrained=True, **kwargs):
+    model = TorchVisionModel(
+        "mobilenet_v3_small",
+        num_classes=num_classes,
+        loss=loss,
+        pretrained=pretrained,
+        fc_dims=512
+        ** kwargs,
     )
     return model
