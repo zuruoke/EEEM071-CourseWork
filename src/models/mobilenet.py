@@ -189,7 +189,7 @@ class TorchVisionModel(nn.Module):
         self.backbone = tvmodels.__dict__[name](pretrained=pretrained)
         self.feature_dim = self.backbone.classifier[0].in_features
         self.fc = self._construct_fc_layer(
-            self.feature_dim, fc_dims, dropout_p)
+            fc_dims, self.feature_dim, dropout_p)
 
         # overwrite the classifier used for ImageNet pretrianing
         # nn.Identity() will do nothing, it's just a place-holder
