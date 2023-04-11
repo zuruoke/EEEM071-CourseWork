@@ -100,19 +100,22 @@ class MobileNetV2(nn.Module):
             self._load_pretrained_weights()
         self._init_params()
 
-    def _construct_fc_layer(self, fc_dims, input_dim, dropout_p=None):
-
+    def _construct_fc_layer(self, fc_dims, input_dim):
         if fc_dims is None:
+            self.feature_dim = input_dim
             return None
+
+        assert isinstance(
+            fc_dims, (list, tuple)), "fc_dims must be either list or tuple, but got {}".format(type(fc_dims))
 
         layers = []
         for dim in fc_dims:
             layers.append(nn.Linear(input_dim, dim))
             layers.append(nn.BatchNorm1d(dim))
             layers.append(nn.ReLU(inplace=True))
-            if dropout_p is not None:
-                layers.append(nn.Dropout(p=dropout_p))
             input_dim = dim
+
+        self.feature_dim = fc_dims[-1]
 
         return nn.Sequential(*layers)
 
@@ -137,7 +140,14 @@ class MobileNetV2(nn.Module):
     def _load_pretrained_weights(self):
         model = torch.hub.load('pytorch/vision:v0.10.0',
                                'mobilenet_v2', pretrained=True)
-        self.load_state_dict(model.state_dict())
+        state_dict = model.state_dict()
+        custom_state_dict = self.state_dict()
+
+        for k, v in state_dict.items():
+            if k in custom_state_dict and custom_state_dict[k].shape == v.shape:
+                custom_state_dict[k] = v
+
+        self.load_state_dict(custom_state_dict)
 
     def forward(self, x):
         x = self.features(x)
